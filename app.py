@@ -34,7 +34,7 @@ st.sidebar.success("Local RTX 3050 Native Engine (Zero Cloud Latency)")
 uploaded_file = st.file_uploader("Upload a Traffic Video (MP4 / AVI)", type=["mp4", "avi", "mov"])
 
 # Default sample fallback if no file uploaded
-default_video = r"C:\Users\HP\Downloads\7a9bcc1ebadfbc4c561b60e51d2c8e6a.mp4"
+default_video = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sample_traffic.mp4")
 video_path = None
 
 if uploaded_file is not None:
@@ -43,7 +43,7 @@ if uploaded_file is not None:
     video_path = tfile.name
 elif os.path.exists(default_video):
     video_path = default_video
-    st.info(f"Using local video: `{default_video}`")
+    st.info(f"Using default bundled video: `{os.path.basename(default_video)}`")
 
 if video_path and st.button("🚀 Run AGAHI Vision Zero Pipeline", type="primary"):
     cap = cv2.VideoCapture(video_path)
