@@ -8,7 +8,7 @@ import numpy as np
 import time
 import os
 import sys
-from agahi_analytics import ViewTransformer, LocalVehicleTracker, SafetyAnalyticsEngine
+from agahi_analytics import ViewTransformer, LocalVehicleTracker, YOLOVehicleTracker, SafetyAnalyticsEngine
 
 def run_agahi(video_path: str, show_window: bool = True):
     if not os.path.exists(video_path):
@@ -40,7 +40,12 @@ def run_agahi(video_path: str, show_window: bool = True):
     ], dtype=np.float32)
 
     transformer = ViewTransformer(src_polygon, dst_rectangle)
-    tracker = LocalVehicleTracker(max_disappeared=15, min_area=int(w * h * 0.001))
+    try:
+        tracker = YOLOVehicleTracker(confidence=0.28)
+        if not tracker.available:
+            tracker = LocalVehicleTracker(max_disappeared=15, min_area=int(w * h * 0.001))
+    except Exception:
+        tracker = LocalVehicleTracker(max_disappeared=15, min_area=int(w * h * 0.001))
     analytics = SafetyAnalyticsEngine(transformer=transformer, fps=fps)
 
     # Output setup

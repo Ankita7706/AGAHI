@@ -9,7 +9,7 @@ import tempfile
 import os
 import time
 import pandas as pd
-from agahi_analytics import ViewTransformer, LocalVehicleTracker, SafetyAnalyticsEngine
+from agahi_analytics import ViewTransformer, LocalVehicleTracker, YOLOVehicleTracker, SafetyAnalyticsEngine
 
 st.set_page_config(
     page_title="AGAHI - Vision Zero Traffic Analytics",
@@ -23,13 +23,19 @@ st.markdown("**Real-Time Traffic Conflict Analytics & Intersection Hotspot Mappi
 # Sidebar Controls
 st.sidebar.header("⚙️ Safety Analytics Configuration")
 
+model_mode = st.sidebar.selectbox(
+    "AI Vision Engine",
+    ["🚀 YOLOv8 Deep Learning (High Accuracy)", "⚡ Lightweight Motion Tracker (CPU Fallback)"],
+    index=0
+)
+
 ttc_thresh = st.sidebar.slider("TTC Alert Threshold (seconds)", min_value=0.5, max_value=3.0, value=1.6, step=0.1)
 road_len = st.sidebar.number_input("Road Segment Length (meters)", min_value=5.0, max_value=100.0, value=25.0, step=1.0)
 road_wid = st.sidebar.number_input("Road Segment Width (meters)", min_value=3.0, max_value=50.0, value=10.0, step=0.5)
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 🎯 Hardware Mode")
-st.sidebar.success("Local RTX 3050 Native Engine (Zero Cloud Latency)")
+st.sidebar.success("Local Native Engine Active")
 
 uploaded_file = st.file_uploader("Upload a Traffic Video (MP4 / AVI)", type=["mp4", "avi", "mov"])
 
@@ -65,7 +71,10 @@ if video_path and st.button("🚀 Run AGAHI Vision Zero Pipeline", type="primary
     ], dtype=np.float32)
 
     transformer = ViewTransformer(src_polygon, dst_rectangle)
-    tracker = LocalVehicleTracker(max_disappeared=15, min_area=int(w * h * 0.001))
+    if "YOLO" in model_mode:
+        tracker = YOLOVehicleTracker(confidence=0.28)
+    else:
+        tracker = LocalVehicleTracker(max_disappeared=15, min_area=int(w * h * 0.001))
     analytics = SafetyAnalyticsEngine(transformer=transformer, fps=fps)
 
     progress_bar = st.progress(0)
