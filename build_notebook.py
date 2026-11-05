@@ -166,7 +166,7 @@ notebook = {
    "metadata": {},
    "outputs": [],
    "source": [
-    "!pip install -q \"rfdetr[train]\" supervision opencv-python-headless scipy matplotlib pandas roboflow shapely yt-dlp\n",
+    "!pip install -q \"rfdetr[train]\" \"supervision<0.31.0\" opencv-python-headless scipy matplotlib pandas roboflow shapely yt-dlp\n",
     "print(\"All libraries installed successfully!\")"
    ]
   },
@@ -780,7 +780,7 @@ notebook = {
  "nbformat_minor": 4
 }
 
-out_path = r"C:\Users\HP\agahi-vision-zero\AGAHI_Vision_Zero_Framework.ipynb"
+out_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "AGAHI_Vision_Zero_Framework.ipynb")
 with open(out_path, "w", encoding="utf-8") as f:
     json.dump(notebook, f, indent=1)
 
