@@ -38,6 +38,7 @@ class YOLOVehicleTracker:
         self.target_classes = [0, 1, 2, 3, 5, 7] # person, bicycle, car, motorcycle, bus, truck
         self.class_names = {0: 'person', 1: 'bicycle', 2: 'car', 3: 'motorcycle', 5: 'bus', 7: 'truck'}
         self.labels = {}
+        self.all_seen_ids = set()
         try:
             from ultralytics import YOLO
             self.model = YOLO(model_name)
@@ -45,6 +46,14 @@ class YOLOVehicleTracker:
         except Exception as e:
             self.available = False
             self.fallback = LocalVehicleTracker()
+
+    @property
+    def next_object_id(self):
+        return len(self.all_seen_ids) + 1
+
+    @property
+    def total_tracked(self):
+        return len(self.all_seen_ids)
 
     def detect_and_update(self, frame):
         if not self.available:
@@ -66,6 +75,7 @@ class YOLOVehicleTracker:
             boxes_data = results[0].boxes.xyxy.cpu().numpy()
             track_ids = results[0].boxes.id.int().cpu().tolist()
             cls_ids = results[0].boxes.cls.int().cpu().tolist()
+            self.all_seen_ids.update(track_ids)
 
             for box, trk_id, cls_id in zip(boxes_data, track_ids, cls_ids):
                 x1, y1, x2, y2 = box
@@ -94,6 +104,10 @@ class LocalVehicleTracker:
         self.min_area = min_area
         self.bg_subtractor = cv2.createBackgroundSubtractorMOG2(history=300, varThreshold=32, detectShadows=True)
         self.kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+
+    @property
+    def total_tracked(self):
+        return max(0, self.next_object_id - 1)
 
     def detect_and_update(self, frame):
         # 1. Background subtraction with morphological filtering
