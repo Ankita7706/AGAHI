@@ -9,7 +9,9 @@ import {
   User, 
   ChevronDown,
   Activity,
-  Zap
+  Zap,
+  Bot,
+  Sparkles
 } from 'lucide-react';
 import { JUNCTIONS } from '../../data/mockTrafficData';
 
@@ -20,7 +22,8 @@ export default function TopNavbar({
   onSelectJunction,
   selectedCamera,
   onSelectCamera,
-  onOpenReport
+  onOpenReport,
+  onOpenCopilot
 }) {
   return (
     <header className="sticky top-0 z-50 w-full min-h-[5rem] bg-[#0c6366] border-b-2 border-black px-4 sm:px-6 py-3 flex items-center justify-between">
@@ -84,11 +87,11 @@ export default function TopNavbar({
           </div>
         </div>
 
-        {/* Right side: Live telemetry, Export report, User profile */}
+        {/* Right side: Live telemetry, AI Copilot, Export report, User profile */}
         <div className="flex items-center justify-between md:justify-end gap-3 text-xs">
           
           {/* Live Stream Telemetry status pill */}
-          <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white border-2 border-black shadow-[2px_2px_0px_0px_#000000] text-[11px] font-mono font-bold text-black">
+          <div className="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white border-2 border-black shadow-[2px_2px_0px_0px_#000000] text-[11px] font-mono font-bold text-black">
             <span className="w-2.5 h-2.5 rounded-full bg-[#28c840] border border-black animate-pulse" />
             <span>29.8 FPS</span>
             <span>·</span>
@@ -97,10 +100,21 @@ export default function TopNavbar({
             <span className="bg-[#efddcc] px-1.5 py-0.5 rounded border border-black">RF-DETR + ByteTrack</span>
           </div>
 
+          {/* AI LLM Copilot Button */}
+          <button
+            onClick={onOpenCopilot}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#efddcc] hover:bg-white text-black font-heading font-black text-xs border-2 border-black shadow-[2px_2px_0px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer"
+            title="Open Vision Zero AI LLM Copilot"
+          >
+            <Bot className="w-4 h-4 text-[#0c6366]" />
+            <span>AI COPILOT</span>
+            <span className="w-2 h-2 rounded-full bg-[#ff5f57] border border-black animate-ping" />
+          </button>
+
           {/* Audit Report Generator Button */}
           <button
             onClick={onOpenReport}
-            className="neo-button-secondary py-1.5 px-3 text-xs shadow-[2px_2px_0px_0px_#000000]"
+            className="neo-button-secondary py-1.5 px-3 text-xs shadow-[2px_2px_0px_0px_#000000] flex items-center gap-1.5"
           >
             <Download className="w-3.5 h-3.5 text-black" />
             <span className="hidden sm:inline">Export Audit Report</span>

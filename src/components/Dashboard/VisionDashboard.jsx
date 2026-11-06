@@ -8,8 +8,10 @@ import VehicleModalBreakdown from './VehicleModalBreakdown';
 import IncidentAuditLog from './IncidentAuditLog';
 import InfrastructureInsights from './InfrastructureInsights';
 import SafetyReportModal from './SafetyReportModal';
+import VisionZeroLlmCopilot from './VisionZeroLlmCopilot';
+import LlmForensicInspectorCard from './LlmForensicInspectorCard';
 import { JUNCTIONS, NEAR_MISS_INCIDENTS } from '../../data/mockTrafficData';
-import { Star, Shield, ArrowUpRight } from 'lucide-react';
+import { Star, Shield, ArrowUpRight, Bot, Sparkles } from 'lucide-react';
 
 export default function VisionDashboard({ user, onLogout }) {
   // Junction & Camera states - preserved
@@ -26,6 +28,9 @@ export default function VisionDashboard({ user, onLogout }) {
 
   // Modal report state - preserved
   const [isReportOpen, setIsReportOpen] = useState(false);
+
+  // LLM Copilot state
+  const [isLlmOpen, setIsLlmOpen] = useState(false);
 
   // Video playback timer loop - preserved
   useEffect(() => {
@@ -62,7 +67,7 @@ export default function VisionDashboard({ user, onLogout }) {
   return (
     <div className="min-h-screen bg-[#0c6366] text-black flex flex-col font-sans selection:bg-black selection:text-[#efddcc]">
       
-      {/* Top sticky Navigation in Dark Cyan #0c6366 */}
+      {/* Top sticky Navigation with LLM Copilot trigger */}
       <TopNavbar
         user={user}
         onLogout={onLogout}
@@ -71,6 +76,7 @@ export default function VisionDashboard({ user, onLogout }) {
         selectedCamera={selectedCamera}
         onSelectCamera={setSelectedCamera}
         onOpenReport={() => setIsReportOpen(true)}
+        onOpenCopilot={() => setIsLlmOpen(true)}
       />
 
       {/* Continuous Marquee Banner */}
@@ -87,11 +93,13 @@ export default function VisionDashboard({ user, onLogout }) {
           <span>RESOLUTION: 1080P @ 29.8 FPS</span>
           <span>✦</span>
           <span>SURROGATE CONFLICT METRICS ACTIVE</span>
+          <span>✦</span>
+          <span>AGAHI LLM COPILOT READY</span>
         </div>
       </section>
 
       {/* Main Dashboard Grid */}
-      <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 pt-6 pb-16 space-y-6 flex-1">
+      <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 pt-6 pb-20 space-y-6 flex-1">
         
         {/* Top Hero Section: KPI Metrics (Left) + Top-Right Video Preview (Right) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
@@ -145,7 +153,17 @@ export default function VisionDashboard({ user, onLogout }) {
 
         </div>
 
-        {/* Section 2: Time-to-Collision (TTC) & Post-Encroachment Time (PET) Timeline */}
+        {/* Section 2: Dedicated AI Vision Zero LLM Forensic Inspector Card */}
+        <section>
+          <LlmForensicInspectorCard
+            junction={selectedJunction}
+            selectedIncident={selectedIncident}
+            currentTime={currentTime}
+            onOpenCopilot={() => setIsLlmOpen(true)}
+          />
+        </section>
+
+        {/* Section 3: Time-to-Collision (TTC) & Post-Encroachment Time (PET) Timeline */}
         <section>
           <TtcRiskChart
             currentTime={currentTime}
@@ -154,7 +172,7 @@ export default function VisionDashboard({ user, onLogout }) {
           />
         </section>
 
-        {/* Section 3: 2D Spatial Intersection Map & Modal Split Bento */}
+        {/* Section 4: 2D Spatial Intersection Map & Modal Split Bento */}
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <JunctionSpatialMap
             currentTime={currentTime}
@@ -163,7 +181,7 @@ export default function VisionDashboard({ user, onLogout }) {
           <VehicleModalBreakdown />
         </section>
 
-        {/* Section 4: Chronological Near-Miss Incident Audit Log */}
+        {/* Section 5: Chronological Near-Miss Incident Audit Log */}
         <section>
           <IncidentAuditLog
             currentTime={currentTime}
@@ -172,12 +190,12 @@ export default function VisionDashboard({ user, onLogout }) {
           />
         </section>
 
-        {/* Section 5: AI Infrastructure Recommendations (Bento) */}
+        {/* Section 6: AI Infrastructure Recommendations (Bento) */}
         <section>
           <InfrastructureInsights />
         </section>
 
-        {/* Section 8: Asymmetric Testimonial / Auditor Verification Block in Light Orange #efddcc */}
+        {/* Section 7: Auditor Testimonial Block in Light Orange #efddcc */}
         <section className="p-6 rounded-2xl bg-[#efddcc] border-2 border-black shadow-[8px_8px_0px_0px_#000000]">
           <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center gap-6">
             <div className="w-16 h-16 rounded-xl bg-black text-[#efddcc] flex items-center justify-center border-2 border-black shadow-[4px_4px_0px_0px_#000000] shrink-0 font-heading font-black text-2xl">
@@ -201,7 +219,42 @@ export default function VisionDashboard({ user, onLogout }) {
 
       </main>
 
-      {/* Section 9: Footer */}
+      {/* Floating Action Button for LLM Copilot */}
+      <button
+        onClick={() => setIsLlmOpen(true)}
+        className="fixed bottom-6 right-6 z-40 flex items-center gap-3 px-4 py-3 bg-[#efddcc] hover:bg-white text-black border-3 border-black rounded-2xl font-heading font-black text-sm shadow-[6px_6px_0px_0px_#000000] active:translate-x-[2px] active:translate-y-[2px] transition-all cursor-pointer group"
+      >
+        <div className="w-9 h-9 rounded-xl bg-[#0c6366] text-white flex items-center justify-center border-2 border-black shadow-[1.5px_1.5px_0px_0px_#000000] group-hover:rotate-6 transition-transform">
+          <Bot className="w-5 h-5 text-white" />
+        </div>
+        <div className="text-left">
+          <div className="flex items-center gap-1.5 leading-none">
+            <span className="font-heading font-black tracking-tight">AI COPILOT</span>
+            <span className="text-[10px] bg-[#ff5f57] text-white px-1.5 py-0.2 rounded border border-black font-mono">LLM</span>
+          </div>
+          <span className="text-[10px] font-mono text-black/70 font-bold block mt-0.5">Click to ask LLM</span>
+        </div>
+      </button>
+
+      {/* Full-Featured LLM Copilot Drawer / Modal */}
+      <VisionZeroLlmCopilot
+        isOpen={isLlmOpen}
+        onClose={() => setIsLlmOpen(false)}
+        junction={selectedJunction}
+        camera={selectedCamera}
+        incident={selectedIncident}
+        currentTime={currentTime}
+      />
+
+      {/* Printable / Exportable Safety Audit Report Modal */}
+      <SafetyReportModal
+        isOpen={isReportOpen}
+        onClose={() => setIsReportOpen(false)}
+        junction={selectedJunction}
+        user={user}
+      />
+
+      {/* Footer */}
       <footer className="bg-[#171e19] text-[#efddcc] border-t-2 border-black px-6 py-6 text-xs">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -216,18 +269,10 @@ export default function VisionDashboard({ user, onLogout }) {
               <span>AES-256 CCTV Stream</span>
             </span>
             <span>·</span>
-            <span>RF-DETR Model v2.4</span>
+            <span>RF-DETR Model v2.4 + Vision Zero LLM Copilot</span>
           </div>
         </div>
       </footer>
-
-      {/* Printable / Exportable Safety Audit Report Modal */}
-      <SafetyReportModal
-        isOpen={isReportOpen}
-        onClose={() => setIsReportOpen(false)}
-        junction={selectedJunction}
-        user={user}
-      />
 
     </div>
   );
