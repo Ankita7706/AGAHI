@@ -49,14 +49,44 @@ class SUMODigitalTwinEngine:
         self.netconvert_bin = self._find_binary("netconvert")
 
     def _find_binary(self, name: str) -> Optional[str]:
-        # Check current python environment bin
-        venv_bin = os.path.join(os.path.dirname(sys.executable), name)
-        if os.path.exists(venv_bin) and os.access(venv_bin, os.X_OK):
-            return venv_bin
-        # Check system PATH
-        path_bin = shutil.which(name)
-        if path_bin:
-            return path_bin
+        candidates = [name]
+        if sys.platform == 'win32':
+            candidates.append(f'{name}.exe')
+
+        # 1. Check SUMO_HOME environment variable
+        sumo_home = os.environ.get('SUMO_HOME')
+        if sumo_home:
+            for cand in candidates:
+                p = os.path.join(sumo_home, 'bin', cand)
+                if os.path.isfile(p):
+                    return p
+
+        # 2. Check standard Windows installation paths
+        if sys.platform == 'win32':
+            for sp in [
+                r'C:\Program Files (x86)\Eclipse\Sumo\bin',
+                r'C:\Program Files\Eclipse\Sumo\bin',
+                r'C:\Eclipse\Sumo\bin'
+            ]:
+                for cand in candidates:
+                    p = os.path.join(sp, cand)
+                    if os.path.isfile(p):
+                        return p
+
+        # 3. Check current python environment Scripts/bin
+        venv_dir = os.path.dirname(sys.executable)
+        for cand in candidates:
+            for sub in ['', 'Scripts', 'bin']:
+                p = os.path.join(venv_dir, sub, cand) if sub else os.path.join(venv_dir, cand)
+                if os.path.isfile(p):
+                    return p
+
+        # 4. Check system PATH via shutil.which
+        for cand in candidates:
+            path_bin = shutil.which(cand)
+            if path_bin:
+                return path_bin
+
         return None
 
     def build_and_simulate(self, scenario: AccidentScenarioData, intervention: bool = False) -> Dict:

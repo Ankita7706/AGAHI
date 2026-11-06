@@ -5,11 +5,27 @@ AGAHI is an end-to-end Vision Zero intelligent transportation platform designed 
 
 ---
 
+## 🍴 Fork & Repository Setup
+
+This repository is forked from [Ankita7706/AGAHI](https://github.com/Ankita7706/AGAHI):
+
+```bash
+# Clone your fork
+git clone https://github.com/nikkita18/AGAHI.git
+cd AGAHI
+
+# Keep synced with upstream
+git remote add upstream https://github.com/Ankita7706/AGAHI.git
+git fetch upstream
+```
+
+---
+
 ## 🌟 Key Capabilities
 
 1. **AI Vision Tracking Engine**:
    - High-accuracy **YOLOv8 Deep Learning** (`yolov8n.pt` / fine-tuned checkpoints) with ByteTrack multi-object tracking.
-   - Fallback lightweight MOG2 background subtractor for low-resource CPU edge devices.
+   - Fallback lightweight MOG2 background subtractor for low-resource CPU edge devices (zero extra weights required).
 2. **Kinematics & Surrogate Safety Measures (SSM)**:
    - Perspective Homography Transformation from image pixels to ground meters ($m$).
    - Real-time velocity tracking ($km/h$) and directional motion vector calculation.
@@ -17,7 +33,7 @@ AGAHI is an end-to-end Vision Zero intelligent transportation platform designed 
 3. **2D Hotspot Mapping**:
    - Kernel Density Estimation (KDE) contour heatmaps identifying recurrent intersection conflict zones.
 4. **SUMO Digital Twin Simulation & AI Causality Engine** (`agahi_sumo.py`):
-   - Automatically reproduces detected real-world conflicts inside Eclipse SUMO.
+   - Automatically reproduces detected real-world conflicts inside Eclipse SUMO or built-in physics engine.
    - AI Causality Judge assesses Speed, Reaction Latency, Intersection Geometry Angles, and Hotspot Recurrence.
    - Simulates counterfactual Vision Zero engineering countermeasures (e.g., IRC:SP:99 Speed Tables + Priority Yielding) and measures collision elimination.
    - Exports complete SUMO XML packages (`.net.xml`, `.rou.xml`, `.sumocfg`) for municipal engineering review.
@@ -27,18 +43,49 @@ AGAHI is an end-to-end Vision Zero intelligent transportation platform designed 
 
 ---
 
-## 🖥️ Running the Local Streamlit Web Dashboard
+## ⚡ Quick Start: Running Locally
+
+### 1. Install Dependencies
+
+Ensure Python 3.10+ is installed, then install the core dependencies:
 
 ```bash
-# 1. Activate the environment
-source .venv/bin/activate
+pip install -r requirements.txt
+```
 
-# 2. Launch the Streamlit dashboard
+*(Optional) For YOLOv8 deep learning tracking and custom model training:*
+```bash
+pip install ultralytics torch torchvision
+```
+
+### 2. Launch the Streamlit Web Dashboard
+
+On Windows, double-click **`run_dashboard.bat`** or run:
+
+```bash
 streamlit run app.py
 ```
+
 Open **`http://localhost:8501`** in your browser:
-- **Tab 1: 🎥 Video Conflict Analytics & Risk Heatmap**: Upload any traffic video or use the bundled sample, track vehicles, view real-time speeds, and inspect detected conflicts.
+- **Tab 1: 🎥 Video Conflict Analytics & Risk Heatmap**: Upload any traffic video or use the bundled sample, track vehicles, view real-time speeds, inspect near-misses, and generate 2D KDE heatmaps.
 - **Tab 2: 🔬 SUMO Digital Twin & AI Black Spot Causality Lab**: Experiment with scenario presets or custom sliders for approach velocities, sightline angles, and conflict cluster counts to see the AI verdict, 3-panel simulation graphics, and download SUMO project archives.
+
+---
+
+## 🖥️ Standalone Desktop OpenCV Runner (`run_desktop.py`)
+
+Run real-time video analytics directly through OpenCV:
+
+```bash
+# Run with live video display window
+python run_desktop.py sample_traffic.mp4
+
+# Run in fast headless mode (no GUI window)
+python run_desktop.py sample_traffic.mp4 --headless
+
+# Quick test on first 60 frames with custom TTC threshold:
+python run_desktop.py sample_traffic.mp4 --max-frames 60 --ttc 1.6
+```
 
 ---
 
@@ -73,13 +120,16 @@ Trained best weights will automatically be saved to `output/weights/best_traffic
 ## 📁 Repository Structure
 
 ```text
-├── agahi_analytics.py              # VisionTransformer, YOLOVehicleTracker & SafetyAnalyticsEngine
+├── agahi_analytics.py              # ViewTransformer, YOLOVehicleTracker & SafetyAnalyticsEngine
 ├── agahi_sumo.py                   # SUMODigitalTwinEngine & AccidentCausalityJudge
 ├── app.py                          # Streamlit Interactive Web Dashboard
+├── run_desktop.py                  # Standalone desktop OpenCV pipeline runner
 ├── train.py                        # Unified Model Fine-Tuning Pipeline (YOLOv8 & RF-DETR)
+├── requirements.txt                # Python dependencies
+├── run_dashboard.bat               # One-click Windows dashboard launcher
+├── run_desktop.bat                 # One-click Windows desktop OpenCV runner
+├── sample_traffic.mp4              # Bundled benchmark traffic video
 ├── AGAHI_Vision_Zero_Framework.ipynb # Complete 13-Section Google Colab Framework Notebook
 ├── build_notebook.py               # Notebook synchronization utility
-├── sample_traffic.mp4              # Bundled benchmark traffic video
-├── run_desktop.py                  # Standalone desktop OpenCV pipeline runner
 └── README.md                       # Documentation
 ```

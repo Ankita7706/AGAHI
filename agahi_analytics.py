@@ -284,18 +284,28 @@ class SafetyAnalyticsEngine:
             return None
 
         pts = np.array([e['px'] for e in self.conflict_events])
-        x = pts[:, 0]
-        y = pts[:, 1]
-        xy = np.vstack([x, y])
-        kde = gaussian_kde(xy)
+        x = pts[:, 0].astype(float)
+        y = pts[:, 1].astype(float)
+
+        # Guard against zero-variance / singular covariance matrix in KDE
+        if np.std(x) < 1e-4:
+            x = x + np.random.normal(0, 1.0, size=len(x))
+        if np.std(y) < 1e-4:
+            y = y + np.random.normal(0, 1.0, size=len(y))
 
         h, w, _ = bg_frame.shape
         xi, yi = np.mgrid[0:w:120j, 0:h:120j]
-        zi = kde(np.vstack([xi.flatten(), yi.flatten()])).reshape(xi.shape)
 
         fig, ax = plt.subplots(figsize=(10, 6))
         ax.imshow(cv2.cvtColor(bg_frame, cv2.COLOR_BGR2RGB))
-        ax.contourf(xi, yi, zi, levels=14, cmap='jet', alpha=0.55)
+
+        try:
+            kde = gaussian_kde(np.vstack([x, y]))
+            zi = kde(np.vstack([xi.flatten(), yi.flatten()])).reshape(xi.shape)
+            ax.contourf(xi, yi, zi, levels=14, cmap='jet', alpha=0.55)
+        except Exception:
+            pass
+
         ax.scatter(x, y, color='red', s=40, edgecolor='white', label='Near-Miss Conflict Event')
         ax.set_title("AGAHI Vision Zero – Conflict Risk Heatmap (KDE)", fontsize=13, weight='bold')
         ax.axis('off')

@@ -1,0 +1,14 @@
+# AGAHI Vision Zero Road Safety & Digital Twin Platform
+# Core Dependencies
+streamlit>=1.30.0
+opencv-python>=4.8.0
+numpy>=1.24.0
+scipy>=1.10.0
+matplotlib>=3.7.0
+pandas>=2.0.0
+
+# Optional: Deep Learning Object Tracking & Model Training (YOLOv8 & PyTorch)
+# Uncomment to enable high-accuracy YOLOv8 deep learning tracking:
+# ultralytics>=8.0.0
+# torch>=2.0.0
+# torchvision>=0.15.0
