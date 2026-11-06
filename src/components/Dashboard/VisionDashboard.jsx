@@ -1,0 +1,234 @@
+import React, { useState, useEffect } from 'react';
+import TopNavbar from './TopNavbar';
+import VideoPreviewPlayer from './VideoPreviewPlayer';
+import SafetyKpiCards from './SafetyKpiCards';
+import TtcRiskChart from './TtcRiskChart';
+import JunctionSpatialMap from './JunctionSpatialMap';
+import VehicleModalBreakdown from './VehicleModalBreakdown';
+import IncidentAuditLog from './IncidentAuditLog';
+import InfrastructureInsights from './InfrastructureInsights';
+import SafetyReportModal from './SafetyReportModal';
+import { JUNCTIONS, NEAR_MISS_INCIDENTS } from '../../data/mockTrafficData';
+import { Star, Shield, ArrowUpRight } from 'lucide-react';
+
+export default function VisionDashboard({ user, onLogout }) {
+  // Junction & Camera states - preserved
+  const [selectedJunction, setSelectedJunction] = useState(() => {
+    return JUNCTIONS.find(j => j.id === user.junction) || JUNCTIONS[0];
+  });
+  const [selectedCamera, setSelectedCamera] = useState(selectedJunction.cameras[0]);
+
+  // Video playback states - preserved
+  const [currentTime, setCurrentTime] = useState(8.5); // Start near incident 1 (9.4s)
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [selectedIncident, setSelectedIncident] = useState(NEAR_MISS_INCIDENTS[0]);
+
+  // Modal report state - preserved
+  const [isReportOpen, setIsReportOpen] = useState(false);
+
+  // Video playback timer loop - preserved
+  useEffect(() => {
+    let interval;
+    if (isPlaying) {
+      interval = setInterval(() => {
+        setCurrentTime(prev => {
+          if (prev >= 80) return 0;
+          return parseFloat((prev + 0.1).toFixed(1));
+        });
+      }, 100);
+    }
+    return () => clearInterval(interval);
+  }, [isPlaying]);
+
+  // When junction changes, update camera - preserved
+  const handleSelectJunction = (j) => {
+    setSelectedJunction(j);
+    setSelectedCamera(j.cameras[0]);
+  };
+
+  // Seeking in video - preserved
+  const handleSeek = (time) => {
+    setCurrentTime(time);
+  };
+
+  // Inspect incident - preserved
+  const handleSelectIncident = (inc) => {
+    setSelectedIncident(inc);
+    setCurrentTime(Math.max(0, inc.timeSeconds - 1.5));
+    setIsPlaying(true);
+  };
+
+  return (
+    <div className="min-h-screen bg-[#0c6366] text-black flex flex-col font-sans selection:bg-black selection:text-[#efddcc]">
+      
+      {/* Top sticky Navigation in Dark Cyan #0c6366 */}
+      <TopNavbar
+        user={user}
+        onLogout={onLogout}
+        selectedJunction={selectedJunction}
+        onSelectJunction={handleSelectJunction}
+        selectedCamera={selectedCamera}
+        onSelectCamera={setSelectedCamera}
+        onOpenReport={() => setIsReportOpen(true)}
+      />
+
+      {/* Continuous Marquee Banner */}
+      <section className="bg-[#171e19] border-b-2 border-black py-2.5 overflow-hidden select-none">
+        <div className="flex items-center gap-8 whitespace-nowrap animate-marquee font-heading font-black text-xs tracking-wider uppercase text-[#efddcc]/90">
+          <span>LIVE CORRIDOR STREAM</span>
+          <span>✦</span>
+          <span>LOCATION: {selectedJunction.name.toUpperCase()}</span>
+          <span>✦</span>
+          <span>CAMERA: {selectedCamera.name.toUpperCase()}</span>
+          <span>✦</span>
+          <span>INFERENCE LATENCY: 32 MS</span>
+          <span>✦</span>
+          <span>RESOLUTION: 1080P @ 29.8 FPS</span>
+          <span>✦</span>
+          <span>SURROGATE CONFLICT METRICS ACTIVE</span>
+        </div>
+      </section>
+
+      {/* Main Dashboard Grid */}
+      <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 pt-6 pb-16 space-y-6 flex-1">
+        
+        {/* Top Hero Section: KPI Metrics (Left) + Top-Right Video Preview (Right) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          
+          {/* Left Column: Corridor Header & 4 KPI Cards (7 cols on desktop) */}
+          <div className="lg:col-span-7 space-y-4">
+            
+            {/* Corridor Status Card in Neo-Brutalist White */}
+            <div className="p-4 sm:p-5 rounded-xl bg-white border-2 border-black shadow-[8px_8px_0px_0px_#000000] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f57] border border-black animate-ping" />
+                  <span className="text-xs font-mono font-black text-black uppercase tracking-widest bg-[#efddcc] px-2 py-0.5 rounded border border-black">
+                    ACTIVE MONITORING CORRIDOR
+                  </span>
+                </div>
+                <h2 className="font-heading font-black text-2xl text-black mt-1">{selectedJunction.name}</h2>
+                <p className="text-xs font-bold text-black/70">
+                  {selectedJunction.city} · Live Edge Detection from {selectedCamera.name}
+                </p>
+              </div>
+
+              <div className="text-left sm:text-right shrink-0">
+                <span className="text-[11px] font-mono font-black uppercase px-2.5 py-1 rounded bg-[#ff5f57] text-black border-2 border-black shadow-[2px_2px_0px_0px_#000000]">
+                  HIGH CONFLICT ZONE
+                </span>
+                <div className="text-xs font-mono font-bold text-black mt-2">
+                  Feed Resolution: <strong>1080p @ 30 FPS</strong>
+                </div>
+              </div>
+            </div>
+
+            {/* 4 Safety KPI Cards */}
+            <SafetyKpiCards currentTime={currentTime} currentRiskScore={selectedJunction.riskScore} />
+          </div>
+
+          {/* Right Column: Video Preview Player in the Top Right (5 cols on desktop) */}
+          <div className="lg:col-span-5">
+            <VideoPreviewPlayer
+              currentTime={currentTime}
+              isPlaying={isPlaying}
+              onTogglePlay={() => setIsPlaying(!isPlaying)}
+              onSeek={handleSeek}
+              selectedIncident={selectedIncident}
+              activeCamera={selectedCamera}
+              onCameraChange={setSelectedCamera}
+              isExpanded={isExpanded}
+              onToggleExpand={() => setIsExpanded(!isExpanded)}
+            />
+          </div>
+
+        </div>
+
+        {/* Section 2: Time-to-Collision (TTC) & Post-Encroachment Time (PET) Timeline */}
+        <section>
+          <TtcRiskChart
+            currentTime={currentTime}
+            onSeek={handleSeek}
+            onSelectIncident={handleSelectIncident}
+          />
+        </section>
+
+        {/* Section 3: 2D Spatial Intersection Map & Modal Split Bento */}
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <JunctionSpatialMap
+            currentTime={currentTime}
+            onSelectIncident={handleSelectIncident}
+          />
+          <VehicleModalBreakdown />
+        </section>
+
+        {/* Section 4: Chronological Near-Miss Incident Audit Log */}
+        <section>
+          <IncidentAuditLog
+            currentTime={currentTime}
+            onSeek={handleSeek}
+            onSelectIncident={handleSelectIncident}
+          />
+        </section>
+
+        {/* Section 5: AI Infrastructure Recommendations (Bento) */}
+        <section>
+          <InfrastructureInsights />
+        </section>
+
+        {/* Section 8: Asymmetric Testimonial / Auditor Verification Block in Light Orange #efddcc */}
+        <section className="p-6 rounded-2xl bg-[#efddcc] border-2 border-black shadow-[8px_8px_0px_0px_#000000]">
+          <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center gap-6">
+            <div className="w-16 h-16 rounded-xl bg-black text-[#efddcc] flex items-center justify-center border-2 border-black shadow-[4px_4px_0px_0px_#000000] shrink-0 font-heading font-black text-2xl">
+              VZ
+            </div>
+            <div className="space-y-1 text-center md:text-left flex-1">
+              <div className="flex items-center justify-center md:justify-start gap-1 mb-1">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-4 h-4 fill-black text-black" />
+                ))}
+              </div>
+              <p className="font-heading font-black text-lg text-black leading-snug">
+                "Proactive near-miss detection reduces the time needed to evaluate an intersection from 3 years of crash history down to 10 days of continuous CCTV surveillance."
+              </p>
+              <div className="text-xs font-bold text-black/80 font-mono">
+                Er. S. R. Mohanty · Chief Transport Planner, Bhubaneswar Smart City Limited
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </main>
+
+      {/* Section 9: Footer */}
+      <footer className="bg-[#171e19] text-[#efddcc] border-t-2 border-black px-6 py-6 text-xs">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-7 h-7 bg-[#efddcc] text-black font-heading font-black text-xs rounded border border-black flex items-center justify-center">
+              AG
+            </div>
+            <span>Odisha State Road Safety Society · Bhubaneswar Smart City ICCC Integration</span>
+          </div>
+          <div className="flex items-center gap-4 text-xs font-mono font-bold text-white">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[#28c840]" />
+              <span>AES-256 CCTV Stream</span>
+            </span>
+            <span>·</span>
+            <span>RF-DETR Model v2.4</span>
+          </div>
+        </div>
+      </footer>
+
+      {/* Printable / Exportable Safety Audit Report Modal */}
+      <SafetyReportModal
+        isOpen={isReportOpen}
+        onClose={() => setIsReportOpen(false)}
+        junction={selectedJunction}
+        user={user}
+      />
+
+    </div>
+  );
+}
