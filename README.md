@@ -5,11 +5,27 @@ AGAHI is an end-to-end Vision Zero intelligent transportation platform designed 
 
 ---
 
+## 🍴 Fork & Repository Setup
+
+This repository is forked from [Ankita7706/AGAHI](https://github.com/Ankita7706/AGAHI):
+
+```bash
+# Clone your fork
+git clone https://github.com/nikkita18/AGAHI.git
+cd AGAHI
+
+# Keep synced with upstream
+git remote add upstream https://github.com/Ankita7706/AGAHI.git
+git fetch upstream
+```
+
+---
+
 ## 🌟 Key Capabilities
 
 1. **AI Vision Tracking Engine**:
    - High-accuracy **YOLOv8 Deep Learning** (`yolov8n.pt` / fine-tuned checkpoints) with ByteTrack multi-object tracking.
-   - Fallback lightweight MOG2 background subtractor for low-resource CPU edge devices.
+   - Fallback lightweight MOG2 background subtractor for low-resource CPU edge devices (zero extra weights required).
 2. **Kinematics & Surrogate Safety Measures (SSM)**:
    - Perspective Homography Transformation from image pixels to ground meters ($m$).
    - Real-time velocity tracking ($km/h$) and directional motion vector calculation.
@@ -17,7 +33,7 @@ AGAHI is an end-to-end Vision Zero intelligent transportation platform designed 
 3. **2D Hotspot Mapping**:
    - Kernel Density Estimation (KDE) contour heatmaps identifying recurrent intersection conflict zones.
 4. **SUMO Digital Twin Simulation & AI Causality Engine** (`agahi_sumo.py`):
-   - Automatically reproduces detected real-world conflicts inside Eclipse SUMO.
+   - Automatically reproduces detected real-world conflicts inside Eclipse SUMO or built-in physics engine.
    - AI Causality Judge assesses Speed, Reaction Latency, Intersection Geometry Angles, and Hotspot Recurrence.
    - Simulates counterfactual Vision Zero engineering countermeasures (e.g., IRC:SP:99 Speed Tables + Priority Yielding) and measures collision elimination.
    - Exports complete SUMO XML packages (`.net.xml`, `.rou.xml`, `.sumocfg`) for municipal engineering review.
@@ -27,18 +43,69 @@ AGAHI is an end-to-end Vision Zero intelligent transportation platform designed 
 
 ---
 
-## 🖥️ Running the Local Streamlit Web Dashboard
+## ⚡ Quick Start: Running Locally
+
+### Option A: Unified Full-Stack Platform (React Frontend + Python ML Backend API)
+
+Run both the React Vite frontend and the Python ML backend with a single click or command:
 
 ```bash
-# 1. Activate the environment
-source .venv/bin/activate
+run_all.bat
+```
 
-# 2. Launch the Streamlit dashboard
+Or start them individually:
+```bash
+# 1. Start Python ML & LLM API backend (Port 8000)
+python backend_api.py
+
+# 2. Start React Frontend Dashboard (Port 5173)
+npm run dev
+```
+
+- **React Vision Zero Dashboard**: [`http://localhost:5173`](http://localhost:5173)
+  - **Live CCTV Video Preview Player**: Native HTML5 player with frame-by-frame scrubbing, 0.5x-2x playback, raw vs YOLOv8 inference toggle, and HUD timecode telemetry.
+  - **Dynamic Safety KPI Cards**: Real-time Time-to-Collision (TTC), Kinetic Conflict Risk Index, Vulnerable Road User (VRU) Threat Rate, and Corridor Flow synchronized with video playback.
+  - **Interactive TTC & Risk Curve**: 11.2s timeline graph with clickable time scrubbing, critical danger thresholds ($TTC < 1.6s$), and interactive data points.
+  - **2D Kernel Density Estimation (KDE) Spatial Heatmap**: Real spatial collision distribution with interactive hotspot cluster pins.
+  - **Near-Miss Incident Audit Log**: 6 real near-miss conflicts detected via computer vision with click-to-seek video forensic replay.
+  - **AI Safety Copilot & In-Dashboard Forensic Inspector**: Interactive LLM assistant (powered by Gemini or built-in local transport intelligence) providing IRC:SP:99 engineering countermeasures and SUMO digital twin verification.
+- **Python ML Backend API**: [`http://localhost:8000`](http://localhost:8000)
+  - `GET /api/status` – System health and model status
+  - `GET /api/telemetry` – Frame-by-frame TTC and conflict metrics
+  - `GET /api/incidents` – Near-miss incident records
+  - `POST /api/llm/chat` – LLM Forensic Safety Copilot
+  - `POST /api/sumo/simulate` – Microscopic traffic simulation
+
+---
+
+### Option B: Streamlit Python Web Dashboard
+
+On Windows, double-click **`run_dashboard.bat`** or run:
+
+```bash
 streamlit run app.py
 ```
+
 Open **`http://localhost:8501`** in your browser:
-- **Tab 1: 🎥 Video Conflict Analytics & Risk Heatmap**: Upload any traffic video or use the bundled sample, track vehicles, view real-time speeds, and inspect detected conflicts.
+- **Tab 1: 🎥 Video Conflict Analytics & Risk Heatmap**: Upload any traffic video or use the bundled sample, track vehicles, view real-time speeds, inspect near-misses, and generate 2D KDE heatmaps.
 - **Tab 2: 🔬 SUMO Digital Twin & AI Black Spot Causality Lab**: Experiment with scenario presets or custom sliders for approach velocities, sightline angles, and conflict cluster counts to see the AI verdict, 3-panel simulation graphics, and download SUMO project archives.
+
+---
+
+## 🖥️ Standalone Desktop OpenCV Runner (`run_desktop.py`)
+
+Run real-time video analytics directly through OpenCV:
+
+```bash
+# Run with live video display window
+python run_desktop.py sample_traffic.mp4
+
+# Run in fast headless mode (no GUI window)
+python run_desktop.py sample_traffic.mp4 --headless
+
+# Quick test on first 60 frames with custom TTC threshold:
+python run_desktop.py sample_traffic.mp4 --max-frames 60 --ttc 1.6
+```
 
 ---
 
@@ -73,13 +140,23 @@ Trained best weights will automatically be saved to `output/weights/best_traffic
 ## 📁 Repository Structure
 
 ```text
-├── agahi_analytics.py              # VisionTransformer, YOLOVehicleTracker & SafetyAnalyticsEngine
+├── backend_api.py                  # Flask REST API connecting Python ML & LLM to React frontend
+├── agahi_analytics.py              # ViewTransformer, YOLOVehicleTracker & SafetyAnalyticsEngine
 ├── agahi_sumo.py                   # SUMODigitalTwinEngine & AccidentCausalityJudge
-├── app.py                          # Streamlit Interactive Web Dashboard
-├── train.py                        # Unified Model Fine-Tuning Pipeline (YOLOv8 & RF-DETR)
-├── AGAHI_Vision_Zero_Framework.ipynb # Complete 13-Section Google Colab Framework Notebook
-├── build_notebook.py               # Notebook synchronization utility
-├── sample_traffic.mp4              # Bundled benchmark traffic video
+├── app.py                          # Streamlit Interactive Web Dashboard (Port 8501)
+├── run_all.bat                     # Launches Python ML Backend (8000) & React Frontend (5173)
+├── run_dashboard.bat               # One-click Windows Streamlit dashboard launcher
+├── run_desktop.bat                 # One-click Windows desktop OpenCV runner
 ├── run_desktop.py                  # Standalone desktop OpenCV pipeline runner
-└── README.md                       # Documentation
+├── train.py                        # Unified Model Fine-Tuning Pipeline (YOLOv8 & RF-DETR)
+├── generate_real_telemetry.py      # Telemetry extractor for video & React components
+├── src/                            # React Frontend Source Code
+│   ├── components/Dashboard/       # Vision Zero Dashboard, Video Preview, LLM Copilot, KPIs
+│   └── data/realTrafficData.js     # Real telemetry & near-miss datasets from computer vision
+├── public/                         # Video & Heatmap web assets (sample_traffic.mp4, heatmap)
+├── requirements.txt                # Python dependencies
+├── package.json                    # Node dependencies
+├── sample_traffic.mp4              # Bundled benchmark traffic video
+├── AGAHI_Vision_Zero_Framework.ipynb # Complete 13-Section Google Colab Framework Notebook
+└── README.md                       # Platform documentation
 ```

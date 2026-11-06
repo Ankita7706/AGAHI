@@ -8,9 +8,10 @@ import numpy as np
 import time
 import os
 import sys
+import argparse
 from agahi_analytics import ViewTransformer, LocalVehicleTracker, YOLOVehicleTracker, SafetyAnalyticsEngine
 
-def run_agahi(video_path: str, show_window: bool = True):
+def run_agahi(video_path: str, show_window: bool = True, ttc_threshold: float = 1.8, max_frames: int = None):
     if not os.path.exists(video_path):
         print(f"Error: Video file not found at: {video_path}")
         return
@@ -25,6 +26,8 @@ def run_agahi(video_path: str, show_window: bool = True):
     print("AGAHI Vision Zero - Road Safety Analytics (Local Mode)")
     print(f"Video: {video_path}")
     print(f"Resolution: {w}x{h} | FPS: {fps:.1f} | Total Frames: {total_frames}")
+    if max_frames:
+        print(f"Processing limit: First {max_frames} frames")
     print("=" * 60)
 
     # 1. Perspective Calibration (Quad to 10m x 30m real-world road rectangle)
@@ -58,7 +61,10 @@ def run_agahi(video_path: str, show_window: bool = True):
     first_frame = None
     t_start = time.time()
 
-    print("\nProcessing frames... Press 'q' in the window to quit, 'p' to pause.\n")
+    if show_window:
+        print("\nProcessing frames with live display... Press 'q' in the window to quit, 'p' to pause.\n")
+    else:
+        print("\nProcessing frames in headless mode...\n")
 
     while cap.isOpened():
         ret, frame = cap.read()
@@ -73,7 +79,7 @@ def run_agahi(video_path: str, show_window: bool = True):
 
         # B. Safety Analytics (Speed & TTC)
         current_data = analytics.update_tracks(objects, frame_idx)
-        conflicts = analytics.compute_ttc_conflicts(current_data, frame_idx, ttc_threshold=1.8)
+        conflicts = analytics.compute_ttc_conflicts(current_data, frame_idx, ttc_threshold=ttc_threshold)
 
         # C. Visualization
         annotated = frame.copy()
@@ -123,7 +129,7 @@ def run_agahi(video_path: str, show_window: bool = True):
         writer.write(annotated)
 
         if show_window:
-            cv2.imshow("AGAHI Vision Zero - Local RTX System", annotated)
+            cv2.imshow("AGAHI Vision Zero - Local Analytics", annotated)
             key = cv2.waitKey(1) & 0xFF
             if key == ord('q'):
                 print("Processing stopped by user.")
@@ -133,6 +139,10 @@ def run_agahi(video_path: str, show_window: bool = True):
 
         if frame_idx % 60 == 0:
             print(f"Frame {frame_idx}/{total_frames} | Conflicts logged: {len(analytics.conflict_events)}")
+
+        if max_frames and frame_idx >= max_frames:
+            print(f"Reached processing limit of {max_frames} frames.")
+            break
 
     cap.release()
     writer.release()
@@ -152,12 +162,16 @@ def run_agahi(video_path: str, show_window: bool = True):
     print("=" * 60)
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="AGAHI Vision Zero - Standalone Desktop Analytics Runner")
     bundled = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sample_traffic.mp4")
-    if len(sys.argv) > 1:
-        target = sys.argv[1]
-    elif os.path.exists(bundled):
-        target = bundled
-    else:
+    parser.add_argument("video", nargs="?", default=bundled if os.path.exists(bundled) else None, help="Path to input traffic video")
+    parser.add_argument("--headless", action="store_true", help="Run in headless mode without displaying OpenCV GUI window")
+    parser.add_argument("--ttc", type=float, default=1.8, help="Time-to-Collision alert threshold in seconds (default: 1.8)")
+    parser.add_argument("--max-frames", type=int, default=None, help="Maximum number of frames to process (optional)")
+    args = parser.parse_args()
+
+    target = args.video
+    if not target or not os.path.exists(target):
         target = input("Enter path to your MP4 traffic video: ").strip(' "\'')
 
-    run_agahi(target, show_window=False)
+    run_agahi(target, show_window=not args.headless, ttc_threshold=args.ttc, max_frames=args.max_frames)
