@@ -53,7 +53,7 @@ if sumo_engine.sumo_bin:
 else:
     st.sidebar.info("SUMO Engine: Built-in Physics Simulation Mode")
 
-if st.sidebar.button("🔄 Reset App State", use_container_width=True):
+if st.sidebar.button("🔄 Reset App State", width="stretch"):
     for key in list(st.session_state.keys()):
         del st.session_state[key]
     st.rerun()
@@ -91,18 +91,28 @@ def render_sumo_analysis(scenario: AccidentScenarioData):
     plot_path = data["plot_path"]
     zip_path = data["zip_path"]
 
-    # 1. AI Verdict Callout Banner
+    # 1. AI Verdict Callout Banner (Styled diagnostic forensic card)
     v_color = causality['verdict_color']
     verdict = causality['verdict']
     confidence = causality['confidence']
     badge = causality['verdict_badge']
 
     if "BLACK SPOT" in verdict:
-        st.error(f"### {v_color} AI Verdict: {verdict} ({confidence}% Confidence)\n**Diagnostic Finding**: {badge}")
+        banner_bg = "#450a0a"
+        border_c = "#ef4444"
     elif "HUMAN" in verdict:
-        st.warning(f"### {v_color} AI Verdict: {verdict} ({confidence}% Confidence)\n**Diagnostic Finding**: {badge}")
+        banner_bg = "#451a03"
+        border_c = "#f59e0b"
     else:
-        st.info(f"### {v_color} AI Verdict: {verdict} ({confidence}% Confidence)\n**Diagnostic Finding**: {badge}")
+        banner_bg = "#082f49"
+        border_c = "#38bdf8"
+
+    st.markdown(f"""
+    <div style="background-color: {banner_bg}; border-left: 6px solid {border_c}; border-radius: 8px; padding: 16px 20px; margin: 12px 0 20px 0;">
+        <h3 style="margin: 0; color: white; font-size: 1.25rem;">{v_color} AI Forensic Verdict: {verdict} ({confidence}% Confidence)</h3>
+        <p style="margin: 6px 0 0 0; color: #f1f5f9; font-size: 1rem;"><b>Primary Root Cause:</b> {badge}</p>
+    </div>
+    """, unsafe_allow_html=True)
 
     # 2. Key Metrics Row
     m1, m2, m3, m4 = st.columns(4)
@@ -113,7 +123,7 @@ def render_sumo_analysis(scenario: AccidentScenarioData):
 
     # 3. 3-Panel Visual Report
     if os.path.exists(plot_path):
-        st.image(plot_path, caption=f"SUMO Micro-Simulation Trajectories & Causality Diagnostics [{scenario.event_id}]", use_container_width=True)
+        st.image(plot_path, caption=f"SUMO Micro-Simulation Trajectories & Causality Diagnostics [{scenario.event_id}]", width="stretch")
 
     # 4. Detailed Root Cause Analysis & Countermeasures
     c_left, c_right = st.columns(2)
@@ -141,7 +151,7 @@ def render_sumo_analysis(scenario: AccidentScenarioData):
                     data=zf.read(),
                     file_name=f"{scenario.event_id}_sumo_digital_twin.zip",
                     mime="application/zip",
-                    use_container_width=True,
+                    width="stretch",
                     key=f"dl_zip_{scenario.event_id}"
                 )
     with d_col2:
@@ -152,7 +162,7 @@ def render_sumo_analysis(scenario: AccidentScenarioData):
                     data=pf.read(),
                     file_name=f"{scenario.event_id}_simulation_report.png",
                     mime="image/png",
-                    use_container_width=True,
+                    width="stretch",
                     key=f"dl_img_{scenario.event_id}"
                 )
 
@@ -198,7 +208,7 @@ with tab_video:
         start_pipeline = st.button("🚀 Run AGAHI Vision Zero Pipeline", type="primary", key="btn_run_pipeline")
     with col_btn2:
         if 'pipeline_results' in st.session_state:
-            if st.button("🗑️ Clear Results", key="btn_clear_pipeline"):
+            if st.button("🗑️ Clear Results", key="btn_clear_pipeline", width="stretch"):
                 del st.session_state['pipeline_results']
                 st.rerun()
 
@@ -227,7 +237,7 @@ with tab_video:
         if "YOLO" in model_mode:
             tracker = YOLOVehicleTracker(confidence=0.28)
             if not tracker.available:
-                st.info("ℹ️ YOLO deep learning is not installed. Running seamlessly using the Lightweight Motion Tracker. (Install `ultralytics` to enable YOLOv8)")
+                st.info("ℹ️ YOLO deep learning is initializing or not available. Running seamlessly using the Lightweight Motion Tracker.")
         else:
             tracker = LocalVehicleTracker(max_disappeared=15, min_area=int(w * h * 0.001))
         analytics = SafetyAnalyticsEngine(transformer=transformer, fps=fps)
@@ -280,7 +290,7 @@ with tab_video:
 
             if frame_idx % 15 == 0 or frame_idx == total_frames:
                 preview_rgb = cv2.cvtColor(annotated, cv2.COLOR_BGR2RGB)
-                video_placeholder.image(preview_rgb, caption=f"Live Processing Frame {frame_idx}/{total_frames}", use_container_width=True)
+                video_placeholder.image(preview_rgb, caption=f"Live Processing Frame {frame_idx}/{total_frames}", width="stretch")
                 progress_bar.progress(min(1.0, frame_idx / total_frames))
                 status_text.text(f"Processed frame {frame_idx}/{total_frames} | Critical Near-Misses Detected: {len(analytics.conflict_events)}")
 
@@ -343,14 +353,14 @@ with tab_video:
         # Heatmap Section
         if p_res.get('heatmap_path') and os.path.exists(p_res['heatmap_path']):
             st.subheader("🔥 2D Intersection Risk Heatmap (Kernel Density Estimation)")
-            st.image(p_res['heatmap_path'], caption="Collision Hotspots (Red indicates recurring conflict danger zones)", use_container_width=True)
+            st.image(p_res['heatmap_path'], caption="Collision Hotspots (Red indicates recurring conflict danger zones)", width="stretch")
 
         # Conflict Log Table
         if p_res['conflict_events']:
             st.subheader("📋 Near-Miss Conflict Log")
             df = pd.DataFrame(p_res['conflict_events'])[['frame', 'id1', 'id2', 'ttc', 'dist_m', 'speed1', 'speed2']]
             df.columns = ['Frame', 'Vehicle 1 ID', 'Vehicle 2 ID', 'TTC (sec)', 'Distance (m)', 'Speed 1 (km/h)', 'Speed 2 (km/h)']
-            st.dataframe(df, use_container_width=True)
+            st.dataframe(df, width="stretch")
             csv = df.to_csv(index=False).encode('utf-8')
             st.download_button(
                 "📥 Download Conflict Log (CSV)",
@@ -433,7 +443,7 @@ with tab_lab:
         run_lab_btn = st.button("⚡ Run SUMO Digital Twin & AI Causality Diagnosis", type="primary", key="btn_run_sumo_lab")
     with lab_btn_col2:
         if 'lab_scenario' in st.session_state:
-            if st.button("🗑️ Reset Simulation Lab", key="btn_reset_lab"):
+            if st.button("🗑️ Reset Simulation Lab", key="btn_reset_lab", width="stretch"):
                 del st.session_state['lab_scenario']
                 st.rerun()
 
