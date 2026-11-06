@@ -8,7 +8,7 @@ import numpy as np
 import time
 import os
 import sys
-from agahi_analytics import ViewTransformer, LocalVehicleTracker, SafetyAnalyticsEngine
+from agahi_analytics import ViewTransformer, LocalVehicleTracker, YOLOVehicleTracker, SafetyAnalyticsEngine
 
 def run_agahi(video_path: str, show_window: bool = True):
     if not os.path.exists(video_path):
@@ -40,7 +40,12 @@ def run_agahi(video_path: str, show_window: bool = True):
     ], dtype=np.float32)
 
     transformer = ViewTransformer(src_polygon, dst_rectangle)
-    tracker = LocalVehicleTracker(max_disappeared=15, min_area=int(w * h * 0.001))
+    try:
+        tracker = YOLOVehicleTracker(confidence=0.28)
+        if not tracker.available:
+            tracker = LocalVehicleTracker(max_disappeared=15, min_area=int(w * h * 0.001))
+    except Exception:
+        tracker = LocalVehicleTracker(max_disappeared=15, min_area=int(w * h * 0.001))
     analytics = SafetyAnalyticsEngine(transformer=transformer, fps=fps)
 
     # Output setup
@@ -147,16 +152,12 @@ def run_agahi(video_path: str, show_window: bool = True):
     print("=" * 60)
 
 if __name__ == "__main__":
+    bundled = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sample_traffic.mp4")
     if len(sys.argv) > 1:
         target = sys.argv[1]
+    elif os.path.exists(bundled):
+        target = bundled
     else:
-        # Default to available local video if present
-        candidates = [
-            r"C:\Users\HP\Downloads\7a9bcc1ebadfbc4c561b60e51d2c8e6a.mp4",
-            r"C:\Users\HP\Downloads\8b49b3b02fdee0b1221897403f5dc166.mp4"
-        ]
-        target = next((c for c in candidates if os.path.exists(c)), None)
-        if not target:
-            target = input("Enter path to your MP4 traffic video: ").strip(' "\'')
+        target = input("Enter path to your MP4 traffic video: ").strip(' "\'')
 
     run_agahi(target, show_window=False)
