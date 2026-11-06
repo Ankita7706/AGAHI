@@ -1,16 +1,18 @@
 """
 AGAHI Vision Zero - Unified Python ML Backend & LLM API Server
 Bridges the React Frontend with:
-1. YOLOv8 Deep Learning & Surrogate Kinematics (agahi_analytics.py)
-2. Eclipse SUMO Microscopic Accident Simulation (agahi_sumo.py)
-3. Multi-Factor AI Causality Diagnostic Engine (agahi_sumo.py)
-4. Vision Zero LLM Copilot (Interactive Road Safety Intelligence)
+1. Video Streaming (sample_traffic.mp4 & agahi_web_output.mp4)
+2. Real-Time Surrogate Safety Telemetry (TTC, PET, Risk, Speeds)
+3. 2D KDE Risk Heatmaps
+4. Eclipse SUMO Microscopic Accident Simulation (agahi_sumo.py)
+5. Multi-Factor AI Causality Diagnostic Engine (agahi_sumo.py)
+6. Vision Zero LLM Copilot (Interactive Road Safety Intelligence)
 """
 import os
 import sys
 import json
 import time
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from agahi_analytics import ViewTransformer, LocalVehicleTracker, YOLOVehicleTracker, SafetyAnalyticsEngine
 from agahi_sumo import (
@@ -44,30 +46,57 @@ def get_status():
         "yolo_engine": "Active (YOLOv8 + ByteTrack)" if yolo_active else "CPU Motion Tracker",
         "sumo_engine": "Eclipse SUMO Executable Active" if sumo_engine.sumo_bin else "Built-in Physics Engine",
         "llm_copilot": "Online (Vision Zero Domain Intelligence)",
+        "video_available": os.path.exists("sample_traffic.mp4"),
         "timestamp": time.time()
     })
 
 # -------------------------------------------------------------
-# 2. LLM Forensic Safety Copilot Endpoint
+# 2. Video Streaming Endpoints (For React Video Player)
+# -------------------------------------------------------------
+@app.route('/api/video/sample', methods=['GET'])
+def stream_sample_video():
+    path = os.path.abspath('sample_traffic.mp4')
+    if os.path.exists(path):
+        return send_file(path, mimetype='video/mp4')
+    return jsonify({"error": "Video not found"}), 404
+
+@app.route('/api/video/tracked', methods=['GET'])
+def stream_tracked_video():
+    for cand in ['public/agahi_tracked_output.mp4', 'output/agahi_tracked_output.mp4', 'output/agahi_web_output.mp4', 'public/agahi_web_output.mp4', 'sample_traffic.mp4']:
+        p = os.path.abspath(cand)
+        if os.path.exists(p) and os.path.getsize(p) > 10000:
+            return send_file(p, mimetype='video/mp4')
+    return jsonify({"error": "No tracked video available"}), 404
+
+@app.route('/api/analytics/heatmap', methods=['GET'])
+def get_heatmap():
+    for cand in ['public/agahi_web_heatmap.png', 'output/agahi_web_heatmap.png', 'output/risk_heatmap.png']:
+        p = os.path.abspath(cand)
+        if os.path.exists(p):
+            return send_file(p, mimetype='image/png')
+    return jsonify({"error": "Heatmap not found"}), 404
+
+# -------------------------------------------------------------
+# 3. LLM Forensic Safety Copilot Endpoint
 # -------------------------------------------------------------
 @app.route('/api/llm/chat', methods=['POST'])
 def llm_chat():
     data = request.get_json() or {}
-    query = data.get('query', '').strip()
+    query = (data.get('query') or data.get('message') or '').strip()
     context = data.get('context', {})
 
     if not query:
         return jsonify({"error": "Empty query"}), 400
 
-    junction_name = context.get('junction', 'Master Canteen Square')
-    city = context.get('city', 'Bhubaneswar')
-    camera_name = context.get('camera', 'Approach North')
-    risk_score = context.get('riskScore', 88)
+    junction_name = context.get('junction', 'Jayadev Vihar Intersection')
+    city = context.get('city', 'Bhubaneswar Smart City')
+    camera_name = context.get('camera', 'Cam 04 — North Arm')
+    risk_score = context.get('riskScore', 78)
     incident = context.get('incident') or {}
-    ttc = incident.get('ttc', 0.82)
+    ttc = incident.get('ttc', 0.84)
     current_time = context.get('currentTime', 9.4)
 
-    # 1. Check if GEMINI_API_KEY is available in environment
+    # Check if GEMINI_API_KEY is available in environment
     gemini_key = os.environ.get('GEMINI_API_KEY') or os.environ.get('GOOGLE_API_KEY')
     if gemini_key:
         try:
@@ -99,10 +128,10 @@ Provide a concise, authoritative, professional response with markdown headers, f
                     "engine": "Gemini 2.5 Flash Traffic Intelligence",
                     "timestamp": time.time()
                 })
-        except Exception as e:
-            pass  # Fallback to local expert reasoning engine below
+        except Exception:
+            pass
 
-    # 2. Local High-Precision Vision Zero Forensic Domain Engine
+    # Local High-Precision Vision Zero Forensic Domain Engine
     q = query.lower()
     if 'diagnose' in q or 'black spot' in q or 'driver error' in q or 'cause' in q or 'verdict' in q:
         reply = (
@@ -114,7 +143,7 @@ Provide a concise, authoritative, professional response with markdown headers, f
             f"- **Human Driver Factor / Speeding**: **22% Probability**\n\n"
             f"#### 🔍 Key Forensic Findings:\n"
             f"1. **Sightline Geometry Defect**: Approach road meets at an oblique 68° angle, creating a persistent blind quadrant for westbound vehicles.\n"
-            f"2. **Recurrent Hotspot Clustering**: CCTV KDE heatmap reveals 5 distinct conflict events clustered at the same node within 7 days, confirming systemic geometric deficiency.\n"
+            f"2. **Recurrent Hotspot Clustering**: CCTV KDE heatmap reveals 5 distinct conflict events clustered at the same node, confirming systemic geometric deficiency.\n"
             f"3. **Inadequate Stopping Sight Distance (SSD)**: Available visual sightline is restricted to 25m, falling below the MoRTH 45m SSD requirement for 40 km/h design speed."
         )
     elif 'irc' in q or 'countermeasure' in q or 'table' in q or 'speed' in q or 'remedy' in q:
@@ -168,7 +197,7 @@ Provide a concise, authoritative, professional response with markdown headers, f
     })
 
 # -------------------------------------------------------------
-# 3. SUMO Simulation & Accident Reconstruction Endpoint
+# 4. SUMO Simulation & Accident Reconstruction Endpoint
 # -------------------------------------------------------------
 @app.route('/api/sumo/simulate', methods=['POST'])
 def sumo_simulate():

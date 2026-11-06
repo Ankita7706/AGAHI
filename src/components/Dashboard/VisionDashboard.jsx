@@ -10,57 +10,58 @@ import InfrastructureInsights from './InfrastructureInsights';
 import SafetyReportModal from './SafetyReportModal';
 import VisionZeroLlmCopilot from './VisionZeroLlmCopilot';
 import LlmForensicInspectorCard from './LlmForensicInspectorCard';
-import { JUNCTIONS, NEAR_MISS_INCIDENTS } from '../../data/mockTrafficData';
+import { JUNCTIONS } from '../../data/mockTrafficData';
+import { REAL_NEAR_MISS_INCIDENTS, VIDEO_DURATION } from '../../data/realTrafficData';
 import { Star, Shield, ArrowUpRight, Bot, Sparkles } from 'lucide-react';
 
 export default function VisionDashboard({ user, onLogout }) {
-  // Junction & Camera states - preserved
+  // Junction & Camera states
   const [selectedJunction, setSelectedJunction] = useState(() => {
     return JUNCTIONS.find(j => j.id === user.junction) || JUNCTIONS[0];
   });
   const [selectedCamera, setSelectedCamera] = useState(selectedJunction.cameras[0]);
 
-  // Video playback states - preserved
-  const [currentTime, setCurrentTime] = useState(8.5); // Start near incident 1 (9.4s)
+  // Video playback states - synchronized to real video
+  const [currentTime, setCurrentTime] = useState(0.5);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
-  const [selectedIncident, setSelectedIncident] = useState(NEAR_MISS_INCIDENTS[0]);
+  const [selectedIncident, setSelectedIncident] = useState(REAL_NEAR_MISS_INCIDENTS[0]);
 
-  // Modal report state - preserved
+  // Modal report state
   const [isReportOpen, setIsReportOpen] = useState(false);
 
   // LLM Copilot state
   const [isLlmOpen, setIsLlmOpen] = useState(false);
 
-  // Video playback timer loop - preserved
+  // Video playback timer loop synchronized to actual 11.18s video duration
   useEffect(() => {
     let interval;
     if (isPlaying) {
       interval = setInterval(() => {
         setCurrentTime(prev => {
-          if (prev >= 80) return 0;
-          return parseFloat((prev + 0.1).toFixed(1));
+          if (prev >= VIDEO_DURATION) return 0;
+          return parseFloat((prev + 0.1).toFixed(2));
         });
       }, 100);
     }
     return () => clearInterval(interval);
   }, [isPlaying]);
 
-  // When junction changes, update camera - preserved
+  // When junction changes, update camera
   const handleSelectJunction = (j) => {
     setSelectedJunction(j);
     setSelectedCamera(j.cameras[0]);
   };
 
-  // Seeking in video - preserved
+  // Seeking in video
   const handleSeek = (time) => {
     setCurrentTime(time);
   };
 
-  // Inspect incident - preserved
+  // Inspect incident
   const handleSelectIncident = (inc) => {
     setSelectedIncident(inc);
-    setCurrentTime(Math.max(0, inc.timeSeconds - 1.5));
+    setCurrentTime(Math.max(0, inc.timeSeconds - 0.5));
     setIsPlaying(true);
   };
 
@@ -88,13 +89,13 @@ export default function VisionDashboard({ user, onLogout }) {
           <span>✦</span>
           <span>CAMERA: {selectedCamera.name.toUpperCase()}</span>
           <span>✦</span>
-          <span>INFERENCE LATENCY: 32 MS</span>
+          <span>EDGE INFERENCE: YOLOv8 + BYTETRACK (32 MS)</span>
           <span>✦</span>
-          <span>RESOLUTION: 1080P @ 29.8 FPS</span>
+          <span>VIDEO FEED: SAMPLE_TRAFFIC.MP4 (30 FPS)</span>
           <span>✦</span>
-          <span>SURROGATE CONFLICT METRICS ACTIVE</span>
+          <span>SURROGATE SAFETY MEASURES ACTIVE (TTC &lt; 1.5S ALERTS)</span>
           <span>✦</span>
-          <span>AGAHI LLM COPILOT READY</span>
+          <span>AGAHI LLM FORENSIC COPILOT ONLINE</span>
         </div>
       </section>
 
@@ -127,7 +128,7 @@ export default function VisionDashboard({ user, onLogout }) {
                   HIGH CONFLICT ZONE
                 </span>
                 <div className="text-xs font-mono font-bold text-black mt-2">
-                  Feed Resolution: <strong>1080p @ 30 FPS</strong>
+                  Feed Resolution: <strong>960x540 @ 30 FPS</strong>
                 </div>
               </div>
             </div>
@@ -136,7 +137,7 @@ export default function VisionDashboard({ user, onLogout }) {
             <SafetyKpiCards currentTime={currentTime} currentRiskScore={selectedJunction.riskScore} />
           </div>
 
-          {/* Right Column: Video Preview Player in the Top Right (5 cols on desktop) */}
+          {/* Right Column: Real Video Preview Player in the Top Right (5 cols on desktop) */}
           <div className="lg:col-span-5">
             <VideoPreviewPlayer
               currentTime={currentTime}
@@ -148,6 +149,7 @@ export default function VisionDashboard({ user, onLogout }) {
               onCameraChange={setSelectedCamera}
               isExpanded={isExpanded}
               onToggleExpand={() => setIsExpanded(!isExpanded)}
+              onOpenCopilot={() => setIsLlmOpen(true)}
             />
           </div>
 
@@ -163,7 +165,7 @@ export default function VisionDashboard({ user, onLogout }) {
           />
         </section>
 
-        {/* Section 3: Time-to-Collision (TTC) & Post-Encroachment Time (PET) Timeline */}
+        {/* Section 3: Time-to-Collision (TTC) & Surrogate Safety Timeline */}
         <section>
           <TtcRiskChart
             currentTime={currentTime}
@@ -187,6 +189,7 @@ export default function VisionDashboard({ user, onLogout }) {
             currentTime={currentTime}
             onSeek={handleSeek}
             onSelectIncident={handleSelectIncident}
+            onOpenCopilot={() => setIsLlmOpen(true)}
           />
         </section>
 

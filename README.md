@@ -45,20 +45,40 @@ git fetch upstream
 
 ## ⚡ Quick Start: Running Locally
 
-### 1. Install Dependencies
+### Option A: Unified Full-Stack Platform (React Frontend + Python ML Backend API)
 
-Ensure Python 3.10+ is installed, then install the core dependencies:
+Run both the React Vite frontend and the Python ML backend with a single click or command:
 
 ```bash
-pip install -r requirements.txt
+run_all.bat
 ```
 
-*(Optional) For YOLOv8 deep learning tracking and custom model training:*
+Or start them individually:
 ```bash
-pip install ultralytics torch torchvision
+# 1. Start Python ML & LLM API backend (Port 8000)
+python backend_api.py
+
+# 2. Start React Frontend Dashboard (Port 5173)
+npm run dev
 ```
 
-### 2. Launch the Streamlit Web Dashboard
+- **React Vision Zero Dashboard**: [`http://localhost:5173`](http://localhost:5173)
+  - **Live CCTV Video Preview Player**: Native HTML5 player with frame-by-frame scrubbing, 0.5x-2x playback, raw vs YOLOv8 inference toggle, and HUD timecode telemetry.
+  - **Dynamic Safety KPI Cards**: Real-time Time-to-Collision (TTC), Kinetic Conflict Risk Index, Vulnerable Road User (VRU) Threat Rate, and Corridor Flow synchronized with video playback.
+  - **Interactive TTC & Risk Curve**: 11.2s timeline graph with clickable time scrubbing, critical danger thresholds ($TTC < 1.6s$), and interactive data points.
+  - **2D Kernel Density Estimation (KDE) Spatial Heatmap**: Real spatial collision distribution with interactive hotspot cluster pins.
+  - **Near-Miss Incident Audit Log**: 6 real near-miss conflicts detected via computer vision with click-to-seek video forensic replay.
+  - **AI Safety Copilot & In-Dashboard Forensic Inspector**: Interactive LLM assistant (powered by Gemini or built-in local transport intelligence) providing IRC:SP:99 engineering countermeasures and SUMO digital twin verification.
+- **Python ML Backend API**: [`http://localhost:8000`](http://localhost:8000)
+  - `GET /api/status` – System health and model status
+  - `GET /api/telemetry` – Frame-by-frame TTC and conflict metrics
+  - `GET /api/incidents` – Near-miss incident records
+  - `POST /api/llm/chat` – LLM Forensic Safety Copilot
+  - `POST /api/sumo/simulate` – Microscopic traffic simulation
+
+---
+
+### Option B: Streamlit Python Web Dashboard
 
 On Windows, double-click **`run_dashboard.bat`** or run:
 
@@ -120,16 +140,23 @@ Trained best weights will automatically be saved to `output/weights/best_traffic
 ## 📁 Repository Structure
 
 ```text
+├── backend_api.py                  # Flask REST API connecting Python ML & LLM to React frontend
 ├── agahi_analytics.py              # ViewTransformer, YOLOVehicleTracker & SafetyAnalyticsEngine
 ├── agahi_sumo.py                   # SUMODigitalTwinEngine & AccidentCausalityJudge
-├── app.py                          # Streamlit Interactive Web Dashboard
+├── app.py                          # Streamlit Interactive Web Dashboard (Port 8501)
+├── run_all.bat                     # Launches Python ML Backend (8000) & React Frontend (5173)
+├── run_dashboard.bat               # One-click Windows Streamlit dashboard launcher
+├── run_desktop.bat                 # One-click Windows desktop OpenCV runner
 ├── run_desktop.py                  # Standalone desktop OpenCV pipeline runner
 ├── train.py                        # Unified Model Fine-Tuning Pipeline (YOLOv8 & RF-DETR)
+├── generate_real_telemetry.py      # Telemetry extractor for video & React components
+├── src/                            # React Frontend Source Code
+│   ├── components/Dashboard/       # Vision Zero Dashboard, Video Preview, LLM Copilot, KPIs
+│   └── data/realTrafficData.js     # Real telemetry & near-miss datasets from computer vision
+├── public/                         # Video & Heatmap web assets (sample_traffic.mp4, heatmap)
 ├── requirements.txt                # Python dependencies
-├── run_dashboard.bat               # One-click Windows dashboard launcher
-├── run_desktop.bat                 # One-click Windows desktop OpenCV runner
+├── package.json                    # Node dependencies
 ├── sample_traffic.mp4              # Bundled benchmark traffic video
 ├── AGAHI_Vision_Zero_Framework.ipynb # Complete 13-Section Google Colab Framework Notebook
-├── build_notebook.py               # Notebook synchronization utility
-└── README.md                       # Documentation
+└── README.md                       # Platform documentation
 ```
